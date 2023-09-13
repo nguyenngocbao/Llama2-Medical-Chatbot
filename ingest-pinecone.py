@@ -4,8 +4,9 @@ from langchain.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter 
 import pinecone
 
-DATA_PATH = 'data/'
-DB_FAISS_PATH = 'vectorstore/db_faiss'
+PINECONE_API_KEY = ''
+PINECONE_ENV = ''
+PINECONE_INDEX_NAME = ''
 
 # Create vector database
 def create_vector_db():
@@ -21,18 +22,23 @@ def create_vector_db():
     embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2',
                                        model_kwargs={'device': 'cpu'})
 
-    index_name = "medical-demo"
+    # initialize pinecone
+    pinecone.init(
+      api_key= PINECONE_API_KEY,  # find at app.pinecone.io
+      environment= PINECONE_ENV,  # next to api key in console
+    )
+
+    index_name = PINECONE_INDEX_NAME
 
     if index_name not in pinecone.list_indexes():
     # we create a new index
-    pinecone.create_index(
-      name=index_name,
-      metric='cosine',
-      dimension=1536  
+        pinecone.create_index(
+        name=index_name,
+        metric='cosine',
+        dimension=384  
     )
 
-    db = FAISS.from_documents(texts, embeddings)
-    db.save_local(DB_FAISS_PATH)
+    db = Pinecone.from_documents(texts, embeddings, index_name=index_name)
 
 if __name__ == "__main__":
     create_vector_db()
